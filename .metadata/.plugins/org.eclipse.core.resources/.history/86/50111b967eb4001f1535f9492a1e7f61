@@ -1,0 +1,150 @@
+// OAnQuanLogic.java
+package logic;
+
+import model.Cell;
+import model.GameBoard;
+import model.Player;
+
+public class OAnQuanLogic {
+    private GameBoard board;
+    private Player[] players;
+    private int currentPlayerIndex;
+    private int numberOfBigStones;
+    private static boolean flag = false;
+    public enum Direction {
+        CLOCKWISE,
+        COUNTERCLOCKWISE
+    }
+    
+    public OAnQuanLogic() {
+        board = new GameBoard();
+        players = new Player[]{
+            new Player(1),
+            new Player(2)
+        };
+        currentPlayerIndex = 0;
+        numberOfBigStones = 2;
+    }
+
+    public boolean makeMove(int startCell, Direction direction) {
+        // Kiểm tra ô quan và ô không có sỏi
+        if ((startCell == 0 || startCell == 6) || board.getCell(startCell).getStones() == 0) {
+            return true;
+        }
+
+        int currentCell = distributeStones(startCell, direction);
+       
+        // Kiểm tra kết thúc game
+        if (isGameOver()) {
+            collectRemainingStones();
+            return false;
+        }
+
+        // Chuyển lượt người chơi
+        switchPlayer();
+        flag = true;
+        return true;
+    }
+
+    private int distributeStones(int startCell, Direction direction) {
+        // Lấy tất cả sỏi từ ô bắt đầu
+        
+        int currentCell = startCell;
+
+        while (true) {
+            // Lấy tất cả sỏi từ ô bắt đầu/ô hiện tại
+            int stones = board.getCell(currentCell).removeAllStones();
+
+            // Rải sỏi
+            while (stones > 0) {
+                
+                board.getCell(currentCell).addStone();
+                stones--;
+            }
+
+            while (canCapture(currentCell, direction)) {
+                currentCell = capture(currentCell, direction);
+            }
+            currentCell = getNextCell(currentCell, direction);
+            if (currentCell == 0 || currentCell == 6 || board.getCell(currentCell).getStones() == 0) {
+                break;
+            }
+        }
+
+        // Kiểm tra và thực hiện ăn quân
+     
+        
+        return currentCell;
+    }
+
+    private int getNextCell(int current, Direction direction) {
+        if (direction == Direction.COUNTERCLOCKWISE) {
+            return (current + 1) % GameBoard.getBoardSize();
+        } else {
+            return (current - 1 + GameBoard.getBoardSize()) % GameBoard.getBoardSize();
+        }
+    }
+
+    private boolean canCapture(int currentCell, Direction direction) {
+        int nextCell = getNextCell(currentCell, direction);
+        int nextNextCell = getNextCell(nextCell, direction);
+
+        return board.getCell(nextCell).getStones() == 0 && 
+               (board.getCell(nextNextCell).getStones() > 0 || 
+                board.getCell(nextNextCell).isBigStoneCell());
+    }
+
+    private int capture(int currentCell, Direction direction) {
+        int nextCell = getNextCell(currentCell, direction);
+        int nextNextCell = getNextCell(nextCell, direction);
+        Cell targetCell = board.getCell(nextNextCell);
+
+        if (targetCell.isBigStoneCell()) {
+            players[currentPlayerIndex].addScore(10);
+            numberOfBigStones--;
+            targetCell.removeBigStones();
+        }
+
+        int capturedStones = targetCell.removeAllStones();
+        players[currentPlayerIndex].addScore(capturedStones);
+
+        return nextNextCell;
+    }
+
+    private boolean isGameOver() {
+        return numberOfBigStones == 0 && 
+               board.getCell(0).getStones() == 0 && 
+               board.getCell(6).getStones() == 0;
+    }
+
+    private void collectRemainingStones() {
+        // Player 1's stones
+        for (int i = 1; i < 6; i++) {
+            players[0].addScore(board.getCell(i).removeAllStones());
+        }
+        // Player 2's stones
+        for (int i = 7; i < 12; i++) {
+            players[1].addScore(board.getCell(i).removeAllStones());
+        }
+    }
+
+    private void switchPlayer() {
+        currentPlayerIndex = (currentPlayerIndex + 1) % 2;
+    }
+
+    public Player getCurrentPlayer() {
+        return players[currentPlayerIndex];
+    }
+
+    public Player getPlayer(int playerNumber) {
+        return players[playerNumber - 1];
+    }
+
+    public GameBoard getBoard() {
+        return board;
+    }
+
+    public int getNumberOfBigStones() {
+        return numberOfBigStones;
+    }
+}

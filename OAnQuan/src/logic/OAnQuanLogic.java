@@ -10,7 +10,7 @@ public class OAnQuanLogic {
     private Player[] players;
     private int currentPlayerIndex;
     private int numberOfBigStones;
-    
+    private static boolean flag = false;
     public enum Direction {
         CLOCKWISE,
         COUNTERCLOCKWISE
@@ -32,8 +32,8 @@ public class OAnQuanLogic {
             return true;
         }
 
-        distributeStones(startCell, direction);
-
+        int currentCell = distributeStones(startCell, direction);
+       
         // Kiểm tra kết thúc game
         if (isGameOver()) {
             collectRemainingStones();
@@ -42,29 +42,44 @@ public class OAnQuanLogic {
 
         // Chuyển lượt người chơi
         switchPlayer();
+        flag = true;
         return true;
     }
 
-    private void distributeStones(int startCell, Direction direction) {
+    private int distributeStones(int startCell, Direction direction) {
         // Lấy tất cả sỏi từ ô bắt đầu
-        int stones = board.getCell(startCell).removeAllStones();
+        
         int currentCell = startCell;
 
-        // Rải sỏi
-        while (stones > 0) {
+        while (true) {
+            // Lấy tất cả sỏi từ ô bắt đầu/ô hiện tại
+            int stones = board.getCell(currentCell).removeAllStones();
+
+            // Rải sỏi
+            while (stones > 0) {
+            	currentCell = getNextCell(currentCell, direction);
+                board.getCell(currentCell).addStone();
+                stones--;
+            }
+            // Kiểm tra và thực hiện ăn quân
+            while (canCapture(currentCell, direction)) {
+                 capture(currentCell, direction);
+            }
+            
             currentCell = getNextCell(currentCell, direction);
-            board.getCell(currentCell).addStone();
-            stones--;
+            if (currentCell == 0 || currentCell == 6 || board.getCell(currentCell).getStones() == 0) {
+                break;
+            }
         }
 
-        // Kiểm tra và thực hiện ăn quân
-        while (canCapture(currentCell, direction)) {
-            currentCell = capture(currentCell, direction);
-        }
+
+     
+        return currentCell;
     }
 
+
     private int getNextCell(int current, Direction direction) {
-        if (direction == Direction.CLOCKWISE) {
+        if (direction == Direction.COUNTERCLOCKWISE) {
             return (current + 1) % GameBoard.getBoardSize();
         } else {
             return (current - 1 + GameBoard.getBoardSize()) % GameBoard.getBoardSize();
@@ -80,7 +95,7 @@ public class OAnQuanLogic {
                 board.getCell(nextNextCell).isBigStoneCell());
     }
 
-    private int capture(int currentCell, Direction direction) {
+    private void capture(int currentCell, Direction direction) {
         int nextCell = getNextCell(currentCell, direction);
         int nextNextCell = getNextCell(nextCell, direction);
         Cell targetCell = board.getCell(nextNextCell);
@@ -94,7 +109,7 @@ public class OAnQuanLogic {
         int capturedStones = targetCell.removeAllStones();
         players[currentPlayerIndex].addScore(capturedStones);
 
-        return nextNextCell;
+//        return nextNextCell;
     }
 
     private boolean isGameOver() {

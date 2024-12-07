@@ -13,8 +13,8 @@ public class GameBoard {
 
     private void initializeBoard() {
         // Initialize quan cells (big stone cells)
-        board[0] = new Cell(10, true);  // quan
-        board[6] = new Cell(10, true);  // quan
+        board[0] = new Cell(0, true);  // quan
+        board[6] = new Cell(0, true);  // quan
 
         // Initialize regular cells
         for (int i = 1; i < BOARD_SIZE; i++) {
