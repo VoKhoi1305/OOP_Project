@@ -5,6 +5,7 @@ import java.util.Scanner;
 import logic.OAnQuanLogic;
 import logic.OAnQuanLogic.Direction;
 
+
 public class GameConsole {
     private static OAnQuanLogic game;
     private static Scanner scanner;
@@ -17,7 +18,26 @@ public class GameConsole {
         printWelcomeMessage();
 
         while (gameRunning) {
+            // Hiển thị trạng thái game
             printGameState();
+            
+            // Kiểm tra xem các ô của người chơi hiện tại có trống không
+            if (isPlayerCellsEmpty()) {
+                System.out.println("Các ô của bạn đã hết quân!");
+                System.out.println("Bạn sẽ phải sử dụng điểm số để lấy quân.");
+                
+                // Thông báo số điểm của người chơi
+                int currentPlayer = game.getCurrentPlayer().getNumber();
+                int playerScore = game.getPlayer(currentPlayer).getScore();
+                System.out.println("Điểm số của bạn: " + playerScore);
+                
+                // Nếu không có điểm số để lấy quân
+                if (playerScore == 0) {
+                    System.out.println("Bạn không còn điểm để lấy quân. Lượt của bạn bị bỏ qua.");
+                    game.switchPlayer(); // Chuyển lượt
+                    continue; // Bắt đầu vòng lặp mới
+                }
+            }
             
             // Lấy nước đi từ người chơi
             int cell = getValidCellInput();
@@ -31,6 +51,20 @@ public class GameConsole {
         scanner.close();
     }
 
+    
+    private static boolean isPlayerCellsEmpty() {
+        int currentPlayer = game.getCurrentPlayer().getNumber();
+        int start = (currentPlayer == 1) ? 1 : 7;
+        int end = (currentPlayer == 1) ? 5 : 11;
+        
+        for (int i = start; i <= end; i++) {
+            if (game.getBoard().getCell(i).getStones() > 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
     private static void printWelcomeMessage() {
         System.out.println("Chào mừng đến với game Ô Ăn Quan!");
         System.out.println("Ô số 0 và 6 là ô quan (không được chọn)");
@@ -72,17 +106,47 @@ public class GameConsole {
     }
 
     private static int getValidCellInput() {
+        int currentPlayer = game.getCurrentPlayer().getNumber();
         int cell;
-        do {
-            System.out.print("Chọn ô (1-5 hoặc 7-11): ");
+        while (true) {
+            System.out.print("Người chơi " + currentPlayer + " chọn ô: ");
             cell = scanner.nextInt();
+
+            // Kiểm tra ô quan
             if (cell == 0 || cell == 6) {
                 System.out.println("Không thể chọn ô quan! Vui lòng chọn ô khác.");
-            } else if (game.getBoard().getCell(cell).getStones() == 0) {
-                System.out.println("Ô này không còn sỏi! Vui lòng chọn ô khác.");
+                continue;
             }
-        } while (cell == 0 || cell == 6 || game.getBoard().getCell(cell).getStones() == 0);
-        return cell;
+
+            // Kiểm tra ô phù hợp với người chơi
+            if (currentPlayer == 1 && (cell < 1 || cell > 5)) {
+                System.out.println("Người chơi 1 chỉ được chọn các ô từ 1 đến 5!");
+                continue;
+            }
+
+            if (currentPlayer == 2 && (cell < 7 || cell > 11)) {
+                System.out.println("Người chơi 2 chỉ được chọn các ô từ 7 đến 11!");
+                continue;
+            }
+
+            // Kiểm tra ô có sỏi
+            
+            if (isPlayerCellsEmpty()) {
+            	printBoard();
+                // Nếu các ô đều rỗng, cho phép chọn ô để lấy quân từ điểm số
+                return cell;
+            }
+
+            // Kiểm tra ô có sỏi
+            if (game.getBoard().getCell(cell).getStones() == 0) {
+                 System.out.println("Ô này không còn sỏi! Vui lòng chọn ô khác.");
+                continue;
+            }
+            
+     
+            // Nếu vượt qua tất cả các kiểm tra, trả về ô hợp lệ
+            return cell;
+        }
     }
 
     private static Direction getDirectionInput() {

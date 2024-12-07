@@ -14,6 +14,10 @@ public class Player {
         score += points;
     }
 
+    public void removeScore(int points) {
+        score = Math.max(0, score - points);
+    }
+
     public int getScore() {
         return score;
     }

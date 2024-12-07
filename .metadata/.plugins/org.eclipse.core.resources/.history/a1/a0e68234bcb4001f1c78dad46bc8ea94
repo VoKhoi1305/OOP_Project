@@ -1,0 +1,99 @@
+// OAnQuanLogic.java
+package logic;
+
+import model.Cell;
+import model.GameBoard;
+import model.Player;
+
+public class OAnQuanLogic {
+    private GameBoard board;
+    private Player[] players;
+    private int currentPlayerIndex;
+    private int numberOfBigStones;
+    public enum Direction {
+        CLOCKWISE,
+        COUNTERCLOCKWISE
+    }
+    
+    public OAnQuanLogic() {
+        board = new GameBoard();
+        players = new Player[]{
+            new Player(1),
+            new Player(2)
+        };
+        currentPlayerIndex = 0;
+        numberOfBigStones = 2;
+    }
+
+    public boolean makeMove(int startCell, Direction direction) {
+        // Kiểm tra tính hợp lệ của nước đi theo người chơi
+        if ((currentPlayerIndex == 0 && (startCell < 1 || startCell > 5)) || 
+            (currentPlayerIndex == 1 && (startCell < 7 || startCell > 11))) {
+            System.out.println("Bạn chỉ được chọn ô thuộc phạm vi của mình!");
+            return true;
+        }
+        
+        // Kiểm tra xem những ô của người chơi còn quân không
+        if (isPlayerCellsEmpty()) {
+            // Nếu không còn quân, lấy từ điểm số
+            addStonesFromScore(startCell);
+        }
+
+        // Kiểm tra ô quan và ô không có sỏi
+        if ((startCell == 0 || startCell == 6) || board.getCell(startCell).getStones() == 0) {
+            return true;
+        }
+        
+        int currentCell = distributeStones(startCell, direction);
+       
+        // Kiểm tra kết thúc game
+        if (isGameOver()) {
+            collectRemainingStones();
+            return false;
+        }
+
+        // Chuyển lượt người chơi
+        switchPlayer();
+        return true;
+    }
+
+    // Kiểm tra xem những ô của người chơi hiện tại có quân không
+    private boolean isPlayerCellsEmpty() {
+        int start = (currentPlayerIndex == 0) ? 1 : 7;
+        int end = (currentPlayerIndex == 0) ? 5 : 11;
+        
+        for (int i = start; i <= end; i++) {
+            if (board.getCell(i).getStones() > 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // Thêm quân từ điểm số khi không còn quân trên bàn
+    private void addStonesFromScore(int startCell) {
+        Player currentPlayer = players[currentPlayerIndex];
+        int stonesToAdd = Math.min(5, currentPlayer.getScore());
+        
+        if (stonesToAdd > 0) {
+            // Trừ điểm số
+            currentPlayer.removeScore(stonesToAdd);
+            
+            // Thêm vào ô được chọn
+            for (int i = 0; i < stonesToAdd; i++) {
+                board.getCell(startCell).addStone();
+            }
+            
+            System.out.println("Đã lấy " + stonesToAdd + " quân từ điểm số để chơi.");
+        }
+    }
+
+    // Các phương thức còn lại giữ nguyên như ban đầu...
+    
+    // Bổ sung phương thức removeScore cho lớp Player
+    public void removeScore(int points) {
+        this.score -= points;
+    }
+
+    // ... (giữ nguyên các phương thức khác của OAnQuanLogic)
+}
